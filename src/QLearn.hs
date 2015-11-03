@@ -11,6 +11,7 @@ import qualified Data.Map as Map
 -- st for state Int
 -- ac for action Int
 -- qval for value of q Fractional
+type Table = Map.Map (Int,Int) Double
 
 inf=1e9
 negInf= -inf
@@ -20,54 +21,54 @@ eps=1e-5
 
 --q= Map.empty
 
-getQ::Int->Int->Double
+getQ::Int->Table->Int->Double
 --getQ::(Integral a,Double b)=>a-> a ->b
-getQ state action=q Map.! (state,action)
+getQ state q action=q Map.! (state,action)
 
 greater::(Ord a)=>a->a->a
 greater x y = if x>y then x else y
 
-getMaxActionVal::Int-> [Int]->Double
+getMaxActionVal::Int-> [Int]->Table->Double
 --getMaxActionVal:: (Integral a,Double b)=>a-> [a]->b
-getMaxActionVal newState actions=let x=map (getQ newState) actions
+getMaxActionVal newState actions q=let x=map (getQ  newState q) actions
 									in foldl greater negInf x  
 
 
 
-checkZero::Int->[Int]->Int
-checkZero state [] = -1
-checkZero state (action:rest) = if abs(q Map.! (state,action) )<eps then action
-								else checkZero state rest									
+checkZero::Int->[Int]->Table->Int
+checkZero state [] q= -1
+checkZero state (action:rest) q= if abs(q Map.! (state,action) )<eps then action
+								else checkZero state rest q									
 
 
-findAction::Int->[Int]->Double->Int
-findAction state [] val= -1
-findAction state (action:rest) val=if abs(q Map.! action - val)<eps then action
-									else findAction state rest val		
+findAction::Int->[Int]->Double->Table->Int
+findAction state [] val q= -1
+findAction state (action:rest) val q=if abs(q Map.! (state,action) - val)<eps then action
+									else findAction state rest val q	
 
 
-giveFeedback::Double->Int->[Int]->Int->Int->Double
-giveFeedback feedback newState actions lastState lastAction=let{
-  	maxim=getMaxActionVal newState actions;
-    lastQ=q Map.! (lastState,lastAction);
-	newQ=lastQ+learningRate*(feedback + discountFactor* maxim - lastQ);
-	res=Map.insert (lastState,lastAction) newQ q; 	
+giveFeedback::Double->Int->[Int]->Int->Int->Table->Table
+giveFeedback feedback newState actions lastState lastAction q=let{
+  	maxim=getMaxActionVal newState actions q;
+    lastQVal=q Map.! (lastState,lastAction);
+	newQVal=lastQVal+learningRate*(feedback + discountFactor* maxim - lastQVal);
+	newQ=Map.insert (lastState,lastAction) newQVal q; 	
 	} in newQ														
 
 
-getAction::Int->[Int]->Int
-getAction state actions=if x /= -1 then x else y 
+getAction::Int->[Int]->Table->Int
+getAction state actions q=if x /= -1 then x else y 
 	where{ 
-		  x=checkZero state actions; 
-		  z=map (getQ state) actions;
+		  x=checkZero state actions q; 
+		  z=map (getQ state q) actions;
 		  yval=foldl greater negInf z;
-		  y=findAction state actions yval;
+		  y=findAction state actions yval q;
 		}  
 
-initializeState::Int->[Int]->Int
-initializeState state actions=let{
+initializeState::Int->[Int]->Table->Table
+initializeState state actions q=let{
 		numActions=length actions;
 		states=replicate numActions state;
 		keys=zip states actions;
-		q= foldl (\map k -> Map.insert k 0 map) q keys;	
-	} in state
+		newQ= foldl (\map k -> Map.insert k 0 map) q keys;	
+	} in newQ
