@@ -1,3 +1,9 @@
+module QLearn  
+( getQ,
+  giveFeedback,
+  initializeState
+) where 
+
 import Data.Map (Map)
 import qualified Data.Map as Map
 
@@ -12,7 +18,7 @@ learningRate=0.1
 discountFactor=0.1
 eps=1e-5
 
-q= Map.empty
+--q= Map.empty
 
 getQ::Int->Int->Double
 --getQ::(Integral a,Double b)=>a-> a ->b
@@ -61,8 +67,7 @@ getAction state actions=if x /= -1 then x else y
 initializeState::Int->[Int]->Int
 initializeState state actions=let{
 		numActions=length actions;
-		states=replicate state numActions;
+		states=replicate numActions state;
 		keys=zip states actions;
 		q= foldl (\map k -> Map.insert k 0 map) q keys;	
 	} in state
-	
