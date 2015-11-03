@@ -7,7 +7,7 @@ import qualified Data.Map as Map
 -- qval for value of q Fractional
 
 inf=1e9
-neg_inf=(-inf)
+negInf= -inf
 learningRate=0.1
 discountFactor=0.1
 eps=1e-5
@@ -24,7 +24,7 @@ greater x y = if x>y then x else y
 getMaxActionVal::Int-> [Int]->Double
 --getMaxActionVal:: (Integral a,Double b)=>a-> [a]->b
 getMaxActionVal newState actions=let x=map (getQ newState) actions
-									in foldl greater neg_inf x  
+									in foldl greater negInf x  
 
 
 
@@ -35,7 +35,7 @@ checkZero state (action:rest) = if abs(q Map.! (state,action) )<eps then action
 
 
 findAction::Int->[Int]->Double->Int
-findAction state [] val=(-1)
+findAction state [] val= -1
 findAction state (action:rest) val=if abs(q Map.! action - val)<eps then action
 									else findAction state rest val		
 
@@ -54,6 +54,6 @@ getAction state actions=if x /= -1 then x else y
 	where{ 
 		  x=checkZero state actions; 
 		  z=map (getQ state) actions;
-		  yval=foldl greater neg_inf z;
+		  yval=foldl greater negInf z;
 		  y=findAction state actions yval;
 		}  
