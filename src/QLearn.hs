@@ -57,3 +57,12 @@ getAction state actions=if x /= -1 then x else y
 		  yval=foldl greater negInf z;
 		  y=findAction state actions yval;
 		}  
+
+initializeState::Int->[Int]->Int
+initializeState state actions=let{
+		numActions=length actions;
+		states=replicate state numActions;
+		keys=zip states actions;
+		q= foldl (\map k -> Map.insert k 0 map) q keys;	
+	} in state
+	
