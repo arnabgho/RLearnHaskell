@@ -1,7 +1,8 @@
 module QLearn  
 ( getQ,
   giveFeedback,
-  initializeState
+  initializeState,
+  Table
 ) where 
 
 import Data.Map (Map)
