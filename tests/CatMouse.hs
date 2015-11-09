@@ -44,10 +44,10 @@ isPosOccupied :: Pair -> Bool
 isPosOccupied (x, y) = fBoard!x!y
 
 isOnBoard :: Pair -> Bool
-isOnBoard (x, y) = x > 1 `and` x < boardDim `and` y > 1 `and` y < boardDim
+isOnBoard (x, y) = x > 1 && x < boardDim && y > 1 && y < boardDim
 
 isPosFeasible :: Pair -> Bool
-isPosFeasible (x, y) = isOnBoard `and` $ not isPosOccupied
+isPosFeasible (x, y) = isOnBoard && not isPosOccupied
                       
 applyAction :: Pair -> Action -> Pair
 applyAction (x, y) action = case action of U -> (x-1, y)
