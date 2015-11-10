@@ -16,8 +16,8 @@ initializeTest q (state:restStates)= let{
 	}in resultQ
 
 
---driveQLearn::Table->[(Int,Double)]->Table
---driveQLearn q ((state,feedback):rest)=
+driveQLearn::Table->[(Int,Double)]->Table
+driveQLearn q ((state,feedback):rest)=
 
 
 main= do
