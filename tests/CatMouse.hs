@@ -47,7 +47,7 @@ isOnBoard :: Pair -> Bool
 isOnBoard (x, y) = x > 1 && x < boardDim && y > 1 && y < boardDim
 
 isPosFeasible :: Pair -> Bool
-isPosFeasible (x, y) = isOnBoard && not isPosOccupied
+isPosFeasible (x, y) = isOnBoard (x, y) && not ( isPosOccupied (x, y) )
                       
 applyAction :: Pair -> Action -> Pair
 applyAction (x, y) action = case action of U -> (x-1, y)
@@ -58,4 +58,15 @@ applyAction (x, y) action = case action of U -> (x-1, y)
 
 possActionsMouse :: Integer -> [Action]
 possActionsMouse int = possActions
-                       where possActions = filter isPosFeasible $ map (applyAction mouseState) [U, D, L, R]
+                       where (mouseState, _, _) = intToState int
+                             possActions = filter (isPosFeasible . applyAction mouseState) [U, D, L, R]
+
+possActionsCat :: Integer -> [Action]
+possActionsCat int = possActions
+                       where (_, _, catState) = intToState int
+                             possActions = filter (isPosFeasible . applyAction catState) [U, D, L, R]
+
+nextStateIntMouse :: Integer -> Action ->  Pair
+nextStateIntMouse curIntState = applyAction mouseState
+  where (mouseState, _, _) = intToState curIntState
+
