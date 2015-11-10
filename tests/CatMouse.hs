@@ -109,21 +109,21 @@ reward (mousePos, cheesePos, catPos)
   | catPos == mousePos = -100
   | otherwise = 0
 
+maxIter = 10000
+randomSeed = mkStdGen 42
           
 initMap = SARSA.initializeStates [1..(boardDSq * boardDSq * boardDSq)] [0..3] Map.empty
 initState = ( (2,2) , (1,5) , (2,5) )
 
-learnGame :: State -> SARSA.Table -> Integer -> SARSA.Table
-learnGame s q iterations = learnGame s q' (iterations - 1)
-                            where q' = runEpisode s q
-maxIter = 10000
-randomSeed = mkStdGen 42
+learnGame :: State -> SARSA.Table -> Integer -> StdGen -> SARSA.Table
+learnGame s q iterations seed = learnGame s q' (iterations - 1) newSeed
+  where q' = runEpisode s q seed
+        (_, newSeed) = randomR (1, 1000000) seed :: (Int, StdGen)
              
-runEpisode :: State -> SARSA.Table -> SARSA.Table
-runEpisode s q = runStep a (stateToInt s) maxIter q g
-                  where 
-                    acts = map actionToInt (possActionsMouse s)
-                    (a, g) = {- trace ("Acts are: " ++ show acts ) -} SARSA.getAction (stateToInt s) acts q randomSeed
+runEpisode :: State -> SARSA.Table -> StdGen -> SARSA.Table
+runEpisode s q seed = runStep a (stateToInt s) maxIter q seed
+  where acts = map actionToInt (possActionsMouse s)
+        (a, g) = {- trace ("Acts are: " ++ show acts ) -} SARSA.getAction (stateToInt s) acts q g
 
 
 runStep ::  Integer -> Integer -> Integer -> SARSA.Table -> StdGen -> SARSA.Table
@@ -136,3 +136,13 @@ runStep a s iterL q g = trace ("State" ++ show (intToState s))  $ if isTermState
     acts = map actionToInt (possActionsMouse s')
     (a', g') = {- trace ("Acts are: " ++ show acts) -} SARSA.getAction (stateToInt s') acts q g
     q' = {- trace("Selected action " ++ show a') -} SARSA.updateQ r s a (stateToInt s') a' q
+{-
+ Test run :
+let y = runEpisode initState initMap
+y Map.! ((stateToInt ((5,2),(1,5), (5,4))) , 3)
+-}
+
+x = learnGame initState initMap 10 randomSeed
+
+main  = print x 
+    
