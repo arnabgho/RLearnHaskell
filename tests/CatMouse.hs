@@ -1,7 +1,8 @@
-import qualified SARSA
+import qualified SARSA_eps as SARSA
 import Data.Array
 import Debug.Trace
 import qualified Data.Map as Map
+import System.Random
 
 type Pair = (Integer, Integer)
 type State = (Pair, Pair, Pair)
@@ -116,19 +117,22 @@ learnGame :: State -> SARSA.Table -> Integer -> SARSA.Table
 learnGame s q iterations = learnGame s q' (iterations - 1)
                             where q' = runEpisode s q
 maxIter = 10000
+randomSeed = mkStdGen 42
+             
 runEpisode :: State -> SARSA.Table -> SARSA.Table
-runEpisode s q = runStep a (stateToInt s) maxIter q
+runEpisode s q = runStep a (stateToInt s) maxIter q g
                   where 
                     acts = map actionToInt (possActionsMouse s)
-                    a = {- trace ("Acts are: " ++ show acts ) -} SARSA.getAction (stateToInt s) acts q
+                    (a, g) = {- trace ("Acts are: " ++ show acts ) -} SARSA.getAction (stateToInt s) acts q randomSeed
 
-runStep ::  Integer -> Integer -> Integer -> SARSA.Table -> SARSA.Table
-runStep a s iterL q = if isTermState iterL $ intToState s
-                        then q
-                        else runStep a' (stateToInt s') (iterL-1) q'
+
+runStep ::  Integer -> Integer -> Integer -> SARSA.Table -> StdGen -> SARSA.Table
+runStep a s iterL q g = trace ("State" ++ show (intToState s))  $ if isTermState iterL $ intToState s
+                                                                  then q
+                                                                  else runStep a' (stateToInt s') (iterL-1) q' g'
   where
     s' = applyAction (intToState s) (intToAction a) -- TODO update Cat's position also
     r = reward s' 
     acts = map actionToInt (possActionsMouse s')
-    a' = {- trace ("Acts are: " ++ show acts) -} SARSA.getAction (stateToInt s') acts q 
+    (a', g') = {- trace ("Acts are: " ++ show acts) -} SARSA.getAction (stateToInt s') acts q g
     q' = {- trace("Selected action " ++ show a') -} SARSA.updateQ r s a (stateToInt s') a' q
