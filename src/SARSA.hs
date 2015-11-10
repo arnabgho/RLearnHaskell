@@ -1,32 +1,36 @@
- module SARSA where
+module SARSA where
 
- import qualified Data.Map as Map
+import qualified Data.Map as Map
 
- type Table = Map.Map (Int,Int) Double
+type Table = Map.Map (Integer, Integer) Double
 
- inf = 1e9
- negInf = -inf
- learningRate = 0.1
- discountFactor = 0.1
- eps = 1e-2
+inf = 1e9
+negInf = -inf
+learningRate = 0.1
+discountFactor = 0.1
+eps = 1e-2
 
- initializeState :: Int -> [Int] -> Table -> Table
- initializeState a [] q = q
- initializeState s (a:as) q = Map.insert (s, a) 0 $ initializeState s as q 
+initializeState :: Integer -> [Integer] -> Table -> Table
+initializeState s [] tab = tab
+initializeState s (a:as) tab = Map.insert (s, a) 0 $ initializeState s as tab
 
- -- TODO epsilon greedy => random
- -- TODO maybe type
- getAction :: Int -> [Int] -> Table -> Int
- getAction s [] q = -1
- getAction s (act:acts) q = bestAction 
-				 where thisActionVal = q Map.! (s, act)
-                                       remActionBest = getAction s acts q
-                                       remVal = q Map.! remActionBest
-                                       bestActionVal = if thisActionVal > remVal then act else remActionBest
+initializeStates :: [Integer] > [Integer] -> Table -> Table
+initializeStates [] as tab = tab
+initializeStates (s:rs) as tab = initializeStates rs as $ initializeState s as tab
+                       
+-- TODO epsilon greedy => random
+-- TODO maybe type
+getAction :: Integer -> [Integer] -> Table -> Integer
+getAction s [] q = -1
+getAction s (act:acts) q = bestAction 
+			 where thisActionVal = q Map.! (s, act)
+                               remActionBest = getAction s acts q
+                               remVal = q Map.! (s, remActionBest)
+                               bestAction = if thisActionVal > remVal then act else remActionBest
 
- updateQ :: Double -> Int -> Int -> Int -> Int -> Table -> Table
- updateQ reward state action newState newAction q = Map.insert (state, action) newQVal q
-							 where thisQ = q Map.! (state, action)
-							       nextQ = q Map.! (newState, newAction) 
-							       newQVal = thisQ + learningRate * ( reward + gamma * nextQ - thisQ )
+updateQ :: Double -> Integer -> Integer -> Integer -> Integer -> Table -> Table
+updateQ reward state action newState newAction q = Map.insert (state, action) newQVal q
+						 where thisQ = q Map.! (state, action)
+						       nextQ = q Map.! (newState, newAction) 
+						       newQVal = thisQ + learningRate * ( reward + discountFactor * nextQ - thisQ )
 
