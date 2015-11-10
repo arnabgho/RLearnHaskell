@@ -1,5 +1,8 @@
 module QLearn  
 where 
+import System.Random
+
+--randomProbs=randomRs (0, 1.0) (mkStdGen 42)
 
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -15,6 +18,7 @@ negInf= -inf
 learningRate=0.1
 discountFactor=0.1
 tolerance=1e-5
+epsilon=0.1
 --q= Map.empty
 
 getQ::Int->Table->Int->Double
@@ -51,14 +55,27 @@ giveFeedback feedback newState actions lastState lastAction q=let{
 	newQ=Map.insert (lastState,lastAction) newQVal q; 	
 	} in newQ														
 
+getValAtIndex::[Int]->Int->Int
+getValAtIndex [] _ = -1
+getValAtIndex (x:xs) 1 = x
+getValAtIndex (x:xs) n = getValAtIndex xs n-1
 
-getAction::Int->[Int]->Table->Int
-getAction state actions q=if zeroAction /= -1 then zeroAction else bestAction 
+getRandomAction::[Int]->StdGen->Int
+getRandomAction actions g=randAction 
+	where{
+			numActions = length actions;
+			(randomActionIndex,g')=randomR (1,numActions) g;
+			randAction=getValAtIndex actions randomActionIndex;
+		}
+
+getAction::Int->[Int]->Table->StdGen->(Int,StdGen)
+getAction state actions q g=if prob<epsilon then (randAction,g') else (bestAction,g') 
 	where{ 
-		  zeroAction=checkZero state actions q; 
-		  qValues=map (getQ state q) actions;
-		  maxQVal=foldl greater negInf qValues;
-		  bestAction=findAction state actions maxQVal q;
+			(prob,g')=randomR (0,1.00) g :: (Double,StdGen) ;
+			randAction=getRandomAction actions g;
+			qValues=map (getQ state q) actions;
+			maxQVal=foldl greater negInf qValues;
+			bestAction=findAction state actions maxQVal q;
 		}  
 
 initializeState::Int->[Int]->Table->Table
