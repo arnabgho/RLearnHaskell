@@ -1,22 +1,23 @@
-import qualified SARSA as SARSA
+import qualified SARSA
 import Data.Array
+import Debug.Trace
 import qualified Data.Map as Map
 
 type Pair = (Integer, Integer)
 type State = (Pair, Pair, Pair)
-data Action = U|D|L|R
+data Action = U|D|L|R deriving (Show, Eq)
 
 actionToInt :: Action -> Integer
 actionToInt x = case x of U -> 0
                           D -> 1
                           L -> 2
-                          R -> 3
+                          _ -> 3
 
 intToAction :: Integer -> Action
 intToAction x = case x of 0 -> U
                           1 -> D
                           2 -> L
-                          3 -> R
+                          _ -> R
 
 blankRow = array (1,5) [ (i, False) | i <- [1..5] ]
 boardAllF = array (1,5) [ (i, blankRow) | i <- [1..5] ]  
@@ -45,20 +46,20 @@ stateToInt (mousePos, cheesePos, catPos) = mouseVal * boardDSq * boardDSq + chee
         catVal = coordToInt catPos
 
 valToState :: Integer -> Pair                                          
-valToState v = (v `div` boardDim, v `mod` boardDim )
+valToState v = (v `div` boardDim + 1, v `mod` boardDim + 1)
                                             
 intToState :: Integer -> ( Pair, Pair, Pair )
 intToState x = ( valToState mouseVal, valToState cheeseVal , valToState catVal )
   where catVal = x `mod` boardDSq
         remVal = (x - catVal) `div` boardDSq
         cheeseVal = remVal `mod` boardDSq
-        mouseVal = (remVal - cheeseVal) `mod` boardDSq
+        mouseVal = (remVal - cheeseVal) `div` boardDSq
 
 isPosOccupied :: Pair -> Bool
 isPosOccupied (x, y) = fBoard!x!y
 
 isOnBoard :: Pair -> Bool
-isOnBoard (x, y) = x > 1 && x < boardDim && y > 1 && y < boardDim
+isOnBoard (x, y) = x > 0 && x <= boardDim && y > 0 && y <= boardDim
 
 isPosFeasible :: Pair -> Bool
 isPosFeasible (x, y) = isOnBoard (x, y) && not ( isPosOccupied (x, y) )
@@ -75,17 +76,14 @@ makeMove :: Pair -> Action -> Pair
 makeMove (xM, yM) act = case act of U -> (xM-1, yM)
                                     D -> (xM+1, yM)
                                     L -> (xM, yM-1)
-                                    R -> (xM, yM+1)
+                                    _ -> (xM, yM+1)
 
-             
 applyAction :: State -> Action -> State
 applyAction s action = newState
   where (mousePos, cheesePos, catPos) = s
         newMousePos = makeMove mousePos action
         newCatPos = getCatPos s
         newState = (newMousePos, cheesePos, newCatPos)
-
-
 
 possActionsMouse :: State -> [Action]
 possActionsMouse s = possActions
@@ -101,36 +99,36 @@ nextStateIntMouse :: Integer -> Action ->  Pair
 nextStateIntMouse curIntState = makeMove mouseState
   where (mouseState, _, _) = intToState curIntState
 
-isTermState :: State -> Bool
-isTermState (mouseState, cheeseState, catState) = mouseState == cheeseState || catState == mouseState
+isTermState :: Integer -> State -> Bool
+isTermState iter (mouseState, cheeseState, catState) = iter == 0 || mouseState == cheeseState || catState == mouseState
 
 reward :: State -> Double
-reward (mousePos, cheesePos, catPos) = if mousePos == cheesePos
-                                       then 50
-                                       else if catPos == mousePos
-                                            then -100
-                                            else 0
+reward (mousePos, cheesePos, catPos)
+  | mousePos == cheesePos = 50
+  | catPos == mousePos = -100
+  | otherwise = 0
 
+          
 initMap = SARSA.initializeStates [1..(boardDSq * boardDSq * boardDSq)] [0..3] Map.empty
-initState = ( (1,1) , (1,5) , (2,5) )
+initState = ( (2,2) , (1,5) , (2,5) )
 
 learnGame :: State -> SARSA.Table -> Integer -> SARSA.Table
 learnGame s q iterations = learnGame s q' (iterations - 1)
                             where q' = runEpisode s q
-
+maxIter = 10000
 runEpisode :: State -> SARSA.Table -> SARSA.Table
-runEpisode s q = runStep a (stateToInt s) q
+runEpisode s q = runStep a (stateToInt s) maxIter q
                   where 
                     acts = map actionToInt (possActionsMouse s)
-                    a = SARSA.getAction (stateToInt s) acts q
+                    a = {- trace ("Acts are: " ++ show acts ) -} SARSA.getAction (stateToInt s) acts q
 
-runStep ::  Integer -> Integer -> SARSA.Table -> SARSA.Table
-runStep a s q = if isTermState $ intToState s
-                  then q
-                  else runStep a' (stateToInt s') q'
-                    where
-                      s' = applyAction (intToState s) (intToAction a) -- TODO update Cat's position also
-                      r = reward s' 
-                      acts =  map actionToInt (possActionsMouse s')
-                      a' = SARSA.getAction (stateToInt s') acts q 
-                      q' = SARSA.updateQ r s a (stateToInt s') a' q
+runStep ::  Integer -> Integer -> Integer -> SARSA.Table -> SARSA.Table
+runStep a s iterL q = if isTermState iterL $ intToState s
+                        then q
+                        else runStep a' (stateToInt s') (iterL-1) q'
+  where
+    s' = applyAction (intToState s) (intToAction a) -- TODO update Cat's position also
+    r = reward s' 
+    acts = map actionToInt (possActionsMouse s')
+    a' = {- trace ("Acts are: " ++ show acts) -} SARSA.getAction (stateToInt s') acts q 
+    q' = {- trace("Selected action " ++ show a') -} SARSA.updateQ r s a (stateToInt s') a' q
