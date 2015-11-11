@@ -4,17 +4,17 @@ import Debug.Trace
 import qualified Data.Map as Map
 import System.Random
 
-type Pair = (Int, Int)
+type Pair = (Integer, Integer)
 type State = (Pair, Pair, Pair)
 data Action = U|D|L|R deriving (Show, Eq)
 
-actionToInt :: Action -> Int
-actionToInt x = case x of U -> 0
-                          D -> 1
-                          L -> 2
-                          _ -> 3
+actionToInteger :: Action -> Integer
+actionToInteger x = case x of U -> 0
+                              D -> 1
+                              L -> 2
+                              _ -> 3
 
-intToAction :: Int -> Action
+intToAction :: Integer -> Action
 intToAction x = case x of 0 -> U
                           1 -> D
                           2 -> L
@@ -37,19 +37,19 @@ fBoard = makeTrue [(2,3), (3,3), (4,3)] $! (boardAllF)
 (1, boardDim) = bounds fBoard
 boardDSq = boardDim * boardDim
 
-coordToInt :: Pair -> Int
-coordToInt (x, y) = (x - 1) * boardDim + y - 1
+coordToInteger :: Pair -> Integer
+coordToInteger (x, y) = (x - 1) * boardDim + y - 1
 
-stateToInt :: State -> Int
-stateToInt (mousePos, cheesePos, catPos) = mouseVal * boardDSq * boardDSq + cheeseVal * boardDSq + catVal
-  where mouseVal = coordToInt mousePos
-        cheeseVal = coordToInt cheesePos
-        catVal = coordToInt catPos
+stateToInteger :: State -> Integer
+stateToInteger (mousePos, cheesePos, catPos) = mouseVal * boardDSq * boardDSq + cheeseVal * boardDSq + catVal
+  where mouseVal = coordToInteger mousePos
+        cheeseVal = coordToInteger cheesePos
+        catVal = coordToInteger catPos
 
-valToState :: Int -> Pair                                          
+valToState :: Integer -> Pair                                          
 valToState v = (v `div` boardDim + 1, v `mod` boardDim + 1)
                                             
-intToState :: Int -> ( Pair, Pair, Pair )
+intToState :: Integer -> ( Pair, Pair, Pair )
 intToState x = ( valToState mouseVal, valToState cheeseVal , valToState catVal )
   where catVal = x `mod` boardDSq
         remVal = (x - catVal) `div` boardDSq
@@ -96,11 +96,11 @@ possActionsCat s = possActions
   where (_, _, catState) = s
         possActions = filter (isPosFeasible . makeMove catState) [U, D, L, R]
 
-nextStateIntMouse :: Int -> Action ->  Pair
-nextStateIntMouse curIntState = makeMove mouseState
-  where (mouseState, _, _) = intToState curIntState
+nextStateIntegerMouse :: Integer -> Action ->  Pair
+nextStateIntegerMouse curIntegerState = makeMove mouseState
+  where (mouseState, _, _) = intToState curIntegerState
 
-isTermState :: Int -> State -> Bool
+isTermState :: Integer -> State -> Bool
 isTermState iter (mouseState, cheeseState, catState) = iter == 0 || mouseState == cheeseState || catState == mouseState
 
 reward :: State -> Double
@@ -115,34 +115,34 @@ randomSeed = mkStdGen 540
 initMap = SARSA.initializeStates [1..(boardDSq * boardDSq * boardDSq)] [0..3] Map.empty
 initState = ( (2,2) , (1,5) , (2,5) )
 
-learnGame :: State -> SARSA.Table -> Int -> StdGen -> SARSA.Table
+learnGame :: State -> SARSA.Table -> Integer -> StdGen -> SARSA.Table
 learnGame s q iterations seed = if iterations == 0 then q else learnGame s q' (iterations - 1) newSeed
   where q' = trace ("Ran one episode and now state is " ++ show s) runEpisode s q seed
         (_, newSeed) = randomR (1, 1000) seed :: (Double, StdGen)
              
 runEpisode :: State -> SARSA.Table -> StdGen -> SARSA.Table
-runEpisode s q seed = runStep a (stateToInt s) maxIter q g
-  where acts = {- trace ("Calculated next acts")-}  map actionToInt (possActionsMouse s)
-        (a, g) =  {- trace ("Acts are: " ++ show acts ) -}  SARSA.getAction (stateToInt s) acts q seed
+runEpisode s q seed = runStep a (stateToInteger s) maxIter q g
+  where acts = {- trace ("Calculated next acts")-}  map actionToInteger (possActionsMouse s)
+        (a, g) =  {- trace ("Acts are: " ++ show acts ) -}  SARSA.getAction (stateToInteger s) acts q seed
 
 
-runStep ::  Int -> Int -> Int -> SARSA.Table -> StdGen -> SARSA.Table
+runStep ::  Integer -> Integer -> Integer -> SARSA.Table -> StdGen -> SARSA.Table
 runStep a s iterL q g = {- trace ("State" ++ show (intToState s)) -  $-}if isTermState iterL $ intToState s
                                                                   	then q
-                                                                  	else runStep a' (stateToInt s') (iterL-1) q' g'
+                                                                  	else runStep a' (stateToInteger s') (iterL-1) q' g'
   where
     s' = applyAction (intToState s) (intToAction a) -- TODO update Cat's position also
     r = reward s' 
-    acts = map actionToInt (possActionsMouse s')
-    (a', g') = {- trace ("Acts are: " ++ show acts) -} SARSA.getAction (stateToInt s') acts q g
-    q' = {- trace("Selected action " ++ show a') -} SARSA.updateQ r s a (stateToInt s') a' q
+    acts = map actionToInteger (possActionsMouse s')
+    (a', g') = {- trace ("Acts are: " ++ show acts) -} SARSA.getAction (stateToInteger s') acts q g
+    q' = {- trace("Selected action " ++ show a') -} SARSA.updateQ r s a (stateToInteger s') a' q
 {-
  Test run :
 let y = runEpisode initState initMap
-y Map.! ((stateToInt ((5,2),(1,5), (5,4))) , 3)
+y Map.! ((stateToInteger ((5,2),(1,5), (5,4))) , 3)
 -}
 
--- x = runStep 2 (stateToInt initState) 100 initMap randomSeed
+-- x = runStep 2 (stateToInteger initState) 100 initMap randomSeed
 -- x = runEpisode initState initMap randomSeed
 x = learnGame initState initMap 100 randomSeed 
 
