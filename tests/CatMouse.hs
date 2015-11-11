@@ -110,26 +110,26 @@ reward (mousePos, cheesePos, catPos)
   | otherwise = 0
 
 maxIter = 100
-randomSeed = mkStdGen 42
+randomSeed = mkStdGen 540
           
 initMap = SARSA.initializeStates [1..(boardDSq * boardDSq * boardDSq)] [0..3] Map.empty
 initState = ( (2,2) , (1,5) , (2,5) )
 
 learnGame :: State -> SARSA.Table -> Int -> StdGen -> SARSA.Table
-learnGame s q iterations seed = learnGame s q' (iterations - 1) newSeed
-  where q' = runEpisode s q seed
-        (_, newSeed) = randomR (1, 1000000) seed :: (Int, StdGen)
+learnGame s q iterations seed = if iterations == 0 then q else learnGame s q' (iterations - 1) newSeed
+  where q' = trace ("Ran one episode and now state is " ++ show s) runEpisode s q seed
+        (_, newSeed) = randomR (1, 1000) seed :: (Double, StdGen)
              
 runEpisode :: State -> SARSA.Table -> StdGen -> SARSA.Table
 runEpisode s q seed = runStep a (stateToInt s) maxIter q g
-  where acts = map actionToInt (possActionsMouse s)
-        (a, g) =  trace ("Acts are: " ++ show acts )  SARSA.getAction (stateToInt s) acts q seed
+  where acts = {- trace ("Calculated next acts")-}  map actionToInt (possActionsMouse s)
+        (a, g) =  {- trace ("Acts are: " ++ show acts ) -}  SARSA.getAction (stateToInt s) acts q seed
 
 
 runStep ::  Int -> Int -> Int -> SARSA.Table -> StdGen -> SARSA.Table
-runStep a s iterL q g = trace ("State" ++ show (intToState s))  $ if isTermState iterL $ intToState s
-                                                                  then q
-                                                                  else runStep a' (stateToInt s') (iterL-1) q' g'
+runStep a s iterL q g = {- trace ("State" ++ show (intToState s)) -  $-}if isTermState iterL $ intToState s
+                                                                  	then q
+                                                                  	else runStep a' (stateToInt s') (iterL-1) q' g'
   where
     s' = applyAction (intToState s) (intToAction a) -- TODO update Cat's position also
     r = reward s' 
@@ -143,7 +143,7 @@ y Map.! ((stateToInt ((5,2),(1,5), (5,4))) , 3)
 -}
 
 -- x = runStep 2 (stateToInt initState) 100 initMap randomSeed
-x = runEpisode initState initMap randomSeed
--- x = learnGame initState initMap 10 randomSeed 
+-- x = runEpisode initState initMap randomSeed
+x = learnGame initState initMap 100 randomSeed 
 
 main  = print $ x Map.! (1,1)
