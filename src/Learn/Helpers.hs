@@ -1,5 +1,6 @@
 module Helpers where
 
+import Table 
 import qualified Data.Map as Map
 import System.Random
 import qualified Control.Monad.Reader as Reader
@@ -8,13 +9,7 @@ inf = 1e9
 negInf = -inf
 learningRate = 0.1
 discountFactor = 0.1
-epsilon = 1e-2
-
-data Table state action = Table {
-  table :: Map.Map (state , action ) Double
-}
-
--- getTable :: Table state action -> Reader (Table state action)  
+epsilon = 1e-2 
 
 initializeState :: (Ord state, Ord action) => state -> [action] -> Table state action -> Table state action
 initializeState s [] tab = tab
@@ -45,4 +40,3 @@ getAction s acts q g = if prob < epsilon then (randAction, g') else (bestAction,
   where	(prob,g') = randomR (0,1.00) g :: (Double,StdGen) 
 	randAction = getRandomAction acts g
 	bestAction = getBestAction s acts q
-
