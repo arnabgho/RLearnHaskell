@@ -1,4 +1,5 @@
-import qualified SARSA_eps as SARSA
+import Game
+import Table
 import Data.Array
 import Debug.Trace
 import qualified Data.Map as Map
