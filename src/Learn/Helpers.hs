@@ -3,7 +3,6 @@ module Helpers where
 import Table 
 import qualified Data.Map as Map
 import System.Random
-import qualified Control.Monad.Reader as Reader
 import Debug.Trace
 
 inf = 1e9
