@@ -4,6 +4,7 @@ import Table
 import qualified Data.Map as Map
 import System.Random
 import qualified Control.Monad.Reader as Reader
+import Debug.Trace
 
 inf = 1e9
 negInf = -inf
@@ -26,16 +27,16 @@ getRandomAction actions g = randAction
     (randomActionIndex,g') = randomR (1,numActions) g :: (Int,StdGen)
     randAction = actions !! (randomActionIndex-1)
 
-getBestAction :: (Ord state, Ord action) => state -> [action] -> Table state action -> action
+getBestAction :: (Ord state, Ord action, Show state, Show action) => state -> [action] -> Table state action -> action
 getBestAction s (act:[]) q = act
 getBestAction s (act:acts) q = bestAction
   where
     thisActionVal =  (table q) Map.! (s, act)
-    remActionBest = getBestAction s acts q
+    remActionBest = {- trace (show (s,act)) -} getBestAction s acts q
     remVal = (table q) Map.! (s, remActionBest)
-    bestAction = if thisActionVal > remVal then act else remActionBest
+    bestAction = {-trace (show remActionBest) $-} if thisActionVal > remVal then act else remActionBest
 
-getAction:: (Ord state, Ord action) => state -> [action] -> Table state action -> StdGen -> (action,StdGen)
+getAction:: (Ord state, Ord action, Show action, Show state) => state -> [action] -> Table state action -> StdGen -> (action,StdGen)
 getAction s acts q g = if prob < epsilon then (randAction, g') else (bestAction, g') 
   where	(prob,g') = randomR (0,1.00) g :: (Double,StdGen) 
 	randAction = getRandomAction acts g

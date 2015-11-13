@@ -6,14 +6,14 @@ data Game state action = Game{
   nextState :: state -> (action, action) -> state,
   getPossibleActions :: state -> ([action],[action]),
   startState :: state,
-  aiTrainer :: state -> (action, action)
+  trainer :: state -> (action, action)
   }
 
 data Player = Player1 | Player2
 
 data InteractiveGame state action = InteractiveGame{
   game :: Game state action,
-  aiPlayer :: Player
+  human :: Player
   }
 
 --playAgainst :: HumanPlayer -> InteractiveGame
