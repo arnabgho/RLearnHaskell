@@ -28,8 +28,8 @@ data InteractiveGame state action = InteractiveGame{
 --     -- Player2 -> playGame2 game g
 --   putStrLn "Thanks for playing!"
   
-playGame1 :: (Show action, Show state, Ord action, Ord state) => StdGen -> Game state action -> state -> Table.Table state action -> IO ()
-playGame1 gen g s q =
+playGameInteractive :: (Show action, Show state, Ord action, Ord state) => StdGen -> Game state action -> state -> Table.Table state action -> IO ()
+playGameInteractive gen g s q =
   if not ( isTermState g s ) then 
     do
       putStrLn $ "Current state " ++ show s
@@ -40,7 +40,7 @@ playGame1 gen g s q =
       playerMove <- getLine
       let r = read playerMove :: Int
           act2 = p2 !! r
-      playGame1 gn' g (nextState g s (myAct, act2)) q 
+      playGameInteractive gn' g (nextState g s (myAct, act2)) q 
   else
     putStrLn $ getOutcome (reward g s)
                   

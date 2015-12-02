@@ -106,12 +106,9 @@ initMap = Helpers.initializeStates (map intToState [0..(boardDSq * boardDSq * bo
 initState = ( (2,2) , (1,5) , (2,5) )
 
 
--- x = runStep 2 (stateToInteger initState) 100 initMap randomSeed
--- x = runEpisode initState initMap randomSeed
--- x = learnGame initState initMap 100 randomSeed 
 
 main  = do 
   gen <- getStdGen
   let game = Game.Game isTermState reward applyAction possActions initState aiForPlayers
       x = Learner.learnGame game Game.Player2 initState initMap 100 gen
-  Game.playGame1 gen game initState x 
+  Game.playGameInteractive gen game initState x 

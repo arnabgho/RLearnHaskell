@@ -9,7 +9,7 @@ import qualified Game
 import qualified Data.Map as Map
 import Debug.Trace 
 
-maxIter = 100
+maxIter = 1000
 
 learnGame :: (Show state, Show action, Ord state, Ord action) => Game.Game state action -> Game.Player -> state -> Table state action -> Integer -> StdGen -> Table state action
 learnGame game human s q iterations seed = if iterations == 0 then q else learnGame game human s q' (iterations - 1) newSeed
