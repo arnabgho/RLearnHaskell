@@ -9,7 +9,7 @@ import Debug.Trace
 
 type Pair = (Integer, Integer)
 type State = (Pair, Pair, Pair) 
-data Action = U|D|L|R deriving (Show, Eq, Ord)
+data Action = L|R|U|D deriving (Show, Eq, Ord)
 
 
 blankRow = array (1,5) [ (i, False) | i <- [1..5] ]
@@ -60,10 +60,10 @@ aiForPlayers :: State -> (Action, Action)
 aiForPlayers s = (getMousePos s, getCatPos s) 
 
 makeMove :: Pair -> Action -> Pair
-makeMove (xM, yM) act = case act of U -> (xM-1, yM)
-                                    D -> (xM+1, yM)
-                                    L -> (xM, yM-1)
-                                    _ -> (xM, yM+1)
+makeMove (xM, yM) act = case act of U -> (xM, yM+1)
+                                    D -> (xM, yM-1)
+                                    L -> (xM-1, yM)
+                                    _ -> (xM+1, yM)
 
 applyAction :: State -> (Action, Action) -> State
 applyAction s (actionM, actionC) = newState
@@ -106,13 +106,9 @@ initMap = Helpers.initializeStates (map intToState [0..(boardDSq * boardDSq * bo
 initState = ( (2,2) , (1,5) , (2,5) )
 
 
--- x = runStep 2 (stateToInteger initState) 100 initMap randomSeed
--- x = runEpisode initState initMap randomSeed
--- x = learnGame initState initMap 100 randomSeed 
 
 main  = do 
-      gen <- getStdGen
-      let game = Game.Game isTermState reward applyAction possActions initState aiForPlayers
-          x = Learner.learnGame game Game.Player2 initState initMap 100 gen
-      putStrLn (show $  head $ Map.toDescList (table x))
-
+  gen <- getStdGen
+  let game = Game.Game isTermState reward applyAction possActions initState aiForPlayers
+      x = Learner.learnGame game Game.Player2 initState initMap 100 gen
+  Game.playGameInteractive gen game initState x 
